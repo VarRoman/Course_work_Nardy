@@ -4,7 +4,7 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
-from kivy.graphics import Color, Rectangle
+from kivy.graphics import Color, Rectangle, Ellipse
 from kivy.core.window import Window
 from kivy.config import Config
 from kivy.uix.button import Button
@@ -38,6 +38,21 @@ class PlayerPlace(BoxLayout):
 class GamePlace(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        with self.canvas:
+            x = 135
+            y = 0
+            for i in range(12):
+                Color(0, 123, 441, 1)
+                Ellipse(pos=(x, y), size=(80, 80), )
+                x += 80
+
+            y = 285
+            x = 135
+            for i in range(12):
+                Color(0, 1, 0, 1)
+                Ellipse(pos=(x, y), size=(80, 80), )
+                x += 80
 
 
 
