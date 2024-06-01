@@ -16,19 +16,56 @@
             spacing: 20
 
             Button:
-                text: "lsjfdls"
+                text: "Restart"
                 size_hint: (.5, .3)
                 background_color: (.74, .57, .41, 1)
                 background_normal: ''
+                font_size: 32
+                color: 'black'
 
-            Label:
-                text: 'рахунок'
+            GridLayout:
+                size_hint: (.5, .3)
+                cols: 3
+                rows: 2
+                font_size: 32
+
+                Label:
+                    text: 'Player 1'
+                    font_size: 32
+                    color: 'black'
+
+                Label:
+                    text: '  :  '
+                    font_size: 32
+                    color: 'black'
+
+                Label:
+                    text: 'Player 2'
+                    font_size: 32
+                    color: 'black'
+
+                Label:
+                    text: '  0  '
+                    font_size: 44
+                    color: 'black'
+
+                Label:
+                    text: '  :  '
+                    font_size: 44
+                    color: 'black'
+
+                Label:
+                    text: '  0  '
+                    font_size: 44
+                    color: 'black'
 
             Button:
-                text: "lsjfdls"
+                text: "Roll the dice"
                 size_hint: (.5, .3)
                 background_color: (.74, .57, .41, 1)
                 background_normal: ''
+                font_size: 32
+                color: 'black'
 
 <GamePlace>
     canvas:
