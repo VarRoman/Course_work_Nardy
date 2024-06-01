@@ -8,36 +8,31 @@ from kivy.graphics import Color
 from kivy.core.window import Window
 from kivy.config import Config
 from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
 
 Builder.load_file('main.kv')
 
 class MyApp(App):
     def build(self):
-        Window.clearcolor = (.99, .83, .67, 1)
-        Window.size = (1000, 600)
+        Window.size = (1000, 700)
         Window.left = 250
 
-        self.layout = BoxLayout(orientation='horizontal')
+        self.layout = BoxLayout(orientation='vertical')
         self.layout.size_hint = (1, 1)
         self.layout.add_widget(PlayerPlace())
         self.layout.add_widget(GamePlace())
-        # self.layout.add_widget(PlayerPlace())
 
         return self.layout
 
 
-class PlayerPlace(Widget):
+class PlayerPlace(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.add_widget(Label(text='sfjsjfl'))
-        # self.size_hint = [.3, 1]
 
 
 class GamePlace(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.add_widget(Label(text='sfjsjfl'))
-        self.size_hint = [.7, 1]
 
 
 
