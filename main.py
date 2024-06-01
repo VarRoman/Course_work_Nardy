@@ -4,7 +4,7 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
-from kivy.graphics import Color
+from kivy.graphics import Color, Rectangle
 from kivy.core.window import Window
 from kivy.config import Config
 from kivy.uix.button import Button
@@ -12,15 +12,20 @@ from kivy.uix.gridlayout import GridLayout
 
 Builder.load_file('main.kv')
 
+Config.set('graphics', 'resizable', '0')
+
 class MyApp(App):
     def build(self):
         Window.size = (1000, 700)
         Window.left = 250
+        Window.resizable = False
+
 
         self.layout = BoxLayout(orientation='vertical')
         self.layout.size_hint = (1, 1)
         self.layout.add_widget(PlayerPlace())
         self.layout.add_widget(GamePlace())
+        # self.layout.resizable = False
 
         return self.layout
 
