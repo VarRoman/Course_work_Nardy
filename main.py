@@ -56,7 +56,6 @@ class GamePlace(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.bind(size=self.update_triangles)  # Реагуємо на зміну розміру
 
         top = AnchorLayout(anchor_y='bottom')
         top_up = BoxLayout(orientation='horizontal')
@@ -87,56 +86,6 @@ class GamePlace(BoxLayout):
             bottom_down.add_widget(el)
 
         self.add_widget(bottom)
-
-        # Малюємо початкові трикутники (один раз)
-        self.draw_triangles()
-
-    def draw_triangles(self):
-        with self.canvas:
-            x = 30
-            y = 75 + (self.height - self.triangle_height) / 2  # Вертикальне центрування
-            z = x + self.triangle_width
-
-            for i in range(12):
-                if i % 2 == 0:
-                    Color(140/255, 80/255, 36/255, 1)
-                else:
-                    Color(.8, 1, .85, 1)
-
-                Line(points=(x, 0, y, self.triangle_height, z, 0), close=True)
-                x += self.triangle_width
-                y += self.triangle_width
-                z += self.triangle_width
-
-            x = 30
-            y = 75 + (self.height - self.triangle_height) / 2
-            z = x + self.triangle_width
-
-            for i in range(12):
-                if i % 2 != 0:
-                    Color(140/255, 80/255, 36/255, 1)
-                else:
-                    Color(.8, 1, .85, 1)
-
-                Line(points=(x, self.height, y, self.height - self.triangle_height, z, self.height), close=True)
-                x += self.triangle_width
-                y += self.triangle_width
-                z += self.triangle_width
-
-
-    def update_triangles(self, *args):
-        # Оновлюємо розміри трикутників залежно від розміру вікна
-        self.triangle_width = self.width / 12  # 12 трикутників по горизонталі
-        self.triangle_height = self.height / 2.5  # Пропорційна висота
-
-        # Очищуємо тільки інструкції малювання ліній
-        self.canvas.before.clear()
-        self.canvas.after.clear()
-
-        # Малюємо нові трикутники
-        self.draw_triangles()
-
-
 
 if __name__ == '__main__':
     MyApp().run()
