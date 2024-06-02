@@ -15,12 +15,12 @@ Builder.load_file('main.kv')
 
 Config.set('graphics', 'resizable', '0')
 
+
 class MyApp(App):
     def build(self):
         Window.size = (1000, 700)
         Window.left = 250
         Window.resizable = False
-
 
         self.layout = BoxLayout(orientation='vertical')
         self.layout.size_hint = (1, 1)
@@ -36,56 +36,52 @@ class PlayerPlace(BoxLayout):
         super().__init__(**kwargs)
 
 
-class EllipseWidget(Widget):
-    def __init__(self, color, **kwargs):
-        super().__init__(**kwargs)
+class GamePart(BoxLayout):
+    def on_size(self, *args):
+        self.canvas.clear()
         with self.canvas:
-            Color(*color)
-            self.ellipse = Ellipse(size=(60, 60))
-        self.bind(pos=self.update_ellipse, size=self.update_ellipse)
+            Color(.99, .83, .67, 1)
+            Rectangle(size=self.size, pos=self.pos)
+            print(self.pos)
+            print('W + h')
+            print(self.width, self.height)
+            Color(49 / 255, 41 / 255, 36 / 255, 1)
+            if self.place:
+                Line(points=(self.pos[0] + 15, self.height + self.pos[1], self.width + self.pos[0] - 30, self.height +
+                             self.pos[1], self.pos[0] + (self.width / 2), self.pos[1] + 50), close=True, size=self.size)
+            else:
+                Line(points=(
+                    self.pos[0] + 15, self.pos[1], self.width + self.pos[0] - 30, self.pos[1], self.pos[0] +
+                    (self.width / 2), self.height - 50), close=True, size=self.size)
 
-    def update_ellipse(self, *args):
-        # Оновлення позиції еліпса, щоб він був в центрі віджета
-        self.ellipse.pos = (self.x + 40, self.y + 60)  # Послідовно оновлюємо позицію еліпса на основі положення віджета
+    def __init__(self, place, **kwargs):
+        super().__init__(**kwargs)
+        self.place = place
+
+        self.add_widget(Button())
 
 
-class GamePlace(BoxLayout):
-    triangle_width = NumericProperty(100)  # Ширина трикутників
-    triangle_height = NumericProperty(290)  # Висота трикутників
-
+class GamePlace(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = 'vertical'
+        self.cols = 6
+        self.rows = 2
 
-        top = AnchorLayout(anchor_y='bottom')
-        top_up = BoxLayout(orientation='horizontal')
-        top.add_widget(top_up)
+        upper_line = []
+        lower_line = []
 
-        # Додавання верхніх еліпсів
-        for i in range(12):
-            el = EllipseWidget(color=(94 / 255, 80 / 255, 61 / 255, 1))
-            top_up.add_widget(el)
+        for i in range(6):
+            upper_line.append(GamePart(1))
+            self.add_widget(upper_line[i])
 
-        self.add_widget(top)
+        for i in range(6):
+            lower_line.append(GamePart(0))
+            self.add_widget(lower_line[i])
 
-        center = AnchorLayout(anchor_y='center')
-        center.add_widget(Label(text='                               ', size_hint=(1, 1)))
-        self.add_widget(center)
-        center1 = AnchorLayout(anchor_y='center')
-        center1.add_widget(Label(text='                               ', size_hint=(1, 1)))
-        self.add_widget(center1)
+        # for child in self.children:
+        #     print(f"Розмір дочірнього віджета: {child.size}")
+        #     print(f"Позиція дочірнього віджета: {child.pos}")
 
-        # Нижній макет
-        bottom = AnchorLayout(anchor_y='bottom')
-        bottom_down = BoxLayout(orientation='horizontal')
-        bottom.add_widget(bottom_down)
-
-        # Додавання нижніх еліпсів
-        for i in range(12):
-            el = EllipseWidget(color=(1, 1, .85, 1))
-            bottom_down.add_widget(el)
-
-        self.add_widget(bottom)
 
 if __name__ == '__main__':
     MyApp().run()
