@@ -1,5 +1,5 @@
 <PlayerPlace>
-    size_hint: (1, .3)
+    size_hint: (1, .4)
     canvas:
         Color:
             rgba: (255/255, 239/255, 204/255, 1)
@@ -7,12 +7,14 @@
             size: self.size
             pos: self.pos
     BoxLayout:
+        orientation: 'vertical'
         size: self.size
         padding: 20
         spacing: 20
 
         GridLayout:
             cols: 3
+            rows: 2
             spacing: 20
 
             Button:
@@ -67,6 +69,25 @@
                 font_size: 32
                 color: 'black'
 
+            Label:
+                size_hint: (.2, .2)
+                font_size: 32
+                color: 'black'
+                text: 'Counting table of rounds:'
 
+            GridLayout:
+                size_hint: (.5, .3)
+                cols: 3
+                rows: 2
+                font_size: 32
 
+                Label:
+                    text: '0'
+                    font_size: 42
+                    color: 'black'
+
+                Label:
+                    text: '0'
+                    font_size: 42
+                    color: 'black'
 
