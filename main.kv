@@ -68,6 +68,9 @@
                 background_normal: ''
                 font_size: 32
                 color: 'black'
+                on_press:
+                    first_cube.text = root.get_random_points()
+                    second_cube.text = root.get_random_points()
 
             Label:
                 size_hint: (.2, .2)
@@ -91,3 +94,20 @@
                     font_size: 42
                     color: 'black'
 
+            GridLayout:
+                size_hint: (.5, .3)
+                cols: 3
+                rows: 2
+                font_size: 32
+
+                Label:
+                    id: first_cube
+                    text: '0'
+                    font_size: 42
+                    color: 'black'
+
+                Label:
+                    id: second_cube
+                    text: '0'
+                    font_size: 42
+                    color: 'black'
