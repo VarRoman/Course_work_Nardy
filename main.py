@@ -19,6 +19,16 @@ Config.set('graphics', 'resizable', '0')
 
 
 class MyApp(App):
+
+    def __init__(self, **kwargs):
+        super(MyApp, self).__init__(**kwargs)
+        self.pl = PlayerPlace()
+        self.gm = GamePlace(self.pl.children[0].children[0].children[1].children[0],
+                            self.pl.children[0].children[0].children[1].children[2])
+
+    # def update_manually(self):
+    #     if self
+
     def build(self):
         Window.size = (1000, 700)
         Window.left = 250
@@ -26,15 +36,8 @@ class MyApp(App):
 
         self.layout = BoxLayout(orientation='vertical')
         self.layout.size_hint = (1, 1)
-        self.layout.add_widget(PlayerPlace())
-
-        gm = GamePlace()
-
-        self.layout.add_widget(gm)
-
-
-        # self.layout.resizable = False
-
+        self.layout.add_widget(self.pl)
+        self.layout.add_widget(self.gm)
         return self.layout
 
 
@@ -48,12 +51,11 @@ class PlayerPlace(BoxLayout):
 
 class Checker(Widget):
     def update_checker_canvas(self, new_color):
-        if new_color != self.color:
-            self.color = new_color
-            self.canvas.clear()
-            with self.canvas:
-                Color(*self.color)
-                Ellipse(size=[100, 100], pos=(self.x - (self.height / 2), self.y))
+        self.color = new_color
+        self.canvas.clear()
+        with self.canvas:
+            Color(*self.color)
+            Ellipse(size=[100, 100], pos=(self.x - (self.height / 2), self.y))
 
     def __init__(self, color, position, counter, x, y, **kwargs):
         super().__init__(**kwargs)
@@ -123,7 +125,8 @@ class GamePlace(GridLayout):
         else:
             for i in self.place_on_game:
                 if i.collide_point(*touch.pos) and (i.color == self.choosen.color or
-                                                    i.color == (.99, .83, .67, 1)) and i != self.choosen:
+                                                i.color == (.99, .83, .67, 1)) and i != self.choosen:
+                    # if self.choosen.position - i.position in [self.first_label_dice.text, self.second_label_dice.text]:
                     i.counter = i.counter + 1
                     i.ch.counter = i.counter
                     i.ch.label.text = f'{i.counter}'
@@ -132,28 +135,22 @@ class GamePlace(GridLayout):
                     self.choosen.ch.counter = self.choosen.counter
                     self.choosen.ch.label.text = f'{self.choosen.counter}'
 
-                    if self.choosen.color == (.99, .83, .67, 1) and self.choosen.counter > 0:
-                        self.choosen.remove_widget(self.choosen.ch)
-                        self.choosen.color = i.color
-                        self.choosen.ch.update_checker_canvas(i.color)
-                        self.choosen.add_widget(self.choosen.ch)
+                    if i.color == (.99, .83, .67, 1) and i.counter > 0:
+                        i.color = self.choosen.color
+                        i.on_size()
 
+                    if self.choosen.color != (.99, .83, .67, 1) and self.choosen.counter == 0:
+                        self.choosen.color = (.99, .83, .67, 1)
+                        self.choosen.on_size()
 
-                    if i.counter == "0":
-                        i.color = (.99, .83, .67, 1)
-                        i.ch.update_checker_canvas(i.color)
-
-                    self.choosen.on_size()
-                    i.on_size()
                     self.choosen = None
                     print(self.choosen)
                     break
 
-    def move_checker(self, first_position, second_position, sample_object):
-        pass
-
-    def __init__(self, **kwargs):
+    def __init__(self, first_label, second_label, **kwargs):
         super().__init__(**kwargs)
+        self.first_label_dice = first_label
+        self.second_label_dice = second_label
         self.rows = 2
         self.cols = 12
 
