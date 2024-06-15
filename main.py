@@ -19,26 +19,57 @@ Config.set('graphics', 'resizable', '0')
 
 
 class MyApp(App):
-
-    def __init__(self, **kwargs):
-        super(MyApp, self).__init__(**kwargs)
-        self.pl = PlayerPlace()
-        self.gm = GamePlace(self.pl.children[0].children[0].children[1].children[0],
-                            self.pl.children[0].children[0].children[1].children[2])
-
-    # def update_manually(self):
-    #     if self
-
     def build(self):
         Window.size = (1000, 700)
         Window.left = 250
         Window.resizable = False
 
-        self.layout = BoxLayout(orientation='vertical')
-        self.layout.size_hint = (1, 1)
-        self.layout.add_widget(self.pl)
-        self.layout.add_widget(self.gm)
+        self.layout = MainLayout()
+        # self.layout.do_layout()
+
         return self.layout
+
+class MainLayout(BoxLayout):
+    def giving_the_dices(self, obj, value):
+        if value != 'down':
+            self.gm.message_label = self.pl.children[0].children[0].children[0].children[2]
+            self.gm.first_label_dice = self.pl.children[0].children[0].children[0].children[3]
+            self.gm.second_label_dice = self.pl.children[0].children[0].children[0].children[5]
+            self.gm.turning_dices = True
+
+    def turning_down_the_checker(self, obj, value):
+        if value != 'down':
+            self.gm.chosen = None
+
+    def skip_the_turn(self, obj, value):
+        if value != 'down':
+            if self.gm.player_turn == (.89, .93, .97, 1):
+                self.gm.player_turn = (.19, .16, .14, 1)
+            else:
+                self.gm.player_turn = (.89, .93, .97, 1)
+            self.gm.table_new = []
+            self.gm.turning_dices = False
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.size_hint = (1, 1)
+        self.pl = PlayerPlace()
+        self.gm = GamePlace()
+        # self.rolling_button = self.pl.children[0].children[0].children[3]
+        self.rolling_button = self.pl.children[0].children[0].children[3]
+        self.rolling_button.fbind('state', self.giving_the_dices)
+
+        self.giving_up_the_checker_button = self.pl.children[0].children[0].children[0].children[0]
+        self.giving_up_the_checker_button.fbind('state', self.turning_down_the_checker)
+
+        self.giving_up_the_turn_button = self.pl.children[0].children[0].children[0].children[1]
+        self.giving_up_the_turn_button.fbind('state', self.skip_the_turn)
+
+        self.add_widget(self.pl)
+        self.add_widget(self.gm)
+
+
 
 
 class PlayerPlace(BoxLayout):
@@ -113,49 +144,71 @@ class GamePart(AnchorLayout):
 
 class GamePlace(GridLayout):
     def on_touch_down(self, touch):
-        print(self.choosen)
-        if not self.choosen:
+        if not self.chosen:
             for i in self.place_on_game:
-                if i.collide_point(*touch.pos) and i.counter != 0:
-                    print(i.position)
-                    self.choosen = i
-                    print(self.choosen)
+                if i.collide_point(*touch.pos) and i.counter != 0 and i.color == self.player_turn:
+                    self.chosen = i
                     break
 
         else:
             for i in self.place_on_game:
-                if i.collide_point(*touch.pos) and (i.color == self.choosen.color or
-                                                i.color == (.99, .83, .67, 1)) and i != self.choosen:
-                    # if self.choosen.position - i.position in [self.first_label_dice.text, self.second_label_dice.text]:
-                    i.counter = i.counter + 1
-                    i.ch.counter = i.counter
-                    i.ch.label.text = f'{i.counter}'
+                if i.collide_point(*touch.pos) and (i.color == self.chosen.color or
+                                        i.color == (.99, .83, .67, 1)) and i != self.chosen and self.turning_dices:
+                    if not self.table_new:
+                        self.message_label.text = ""
+                        self.table_new.extend([int(self.first_label_dice.text), int(self.second_label_dice.text)])
+                        if self.table_new[0] == self.table_new[1]:
+                            self.table_new.extend([self.table_new[0], self.table_new[1]])
+                        self.counter = len(self.table_new)
+                    if (i.position - self.chosen.position in self.table_new or
+                            (i.position + 24) - self.chosen.position in self.table_new):
+                        i.counter = i.counter + 1
+                        i.ch.counter = i.counter
+                        i.ch.label.text = f'{i.counter}'
 
-                    self.choosen.counter = self.choosen.counter - 1
-                    self.choosen.ch.counter = self.choosen.counter
-                    self.choosen.ch.label.text = f'{self.choosen.counter}'
+                        self.chosen.counter = self.chosen.counter - 1
+                        self.chosen.ch.counter = self.chosen.counter
+                        self.chosen.ch.label.text = f'{self.chosen.counter}'
 
-                    if i.color == (.99, .83, .67, 1) and i.counter > 0:
-                        i.color = self.choosen.color
-                        i.on_size()
+                        if i.color == (.99, .83, .67, 1) and i.counter > 0:
+                            i.color = self.chosen.color
+                            i.on_size()
 
-                    if self.choosen.color != (.99, .83, .67, 1) and self.choosen.counter == 0:
-                        self.choosen.color = (.99, .83, .67, 1)
-                        self.choosen.on_size()
+                        if self.chosen.color != (.99, .83, .67, 1) and self.chosen.counter == 0:
+                            self.chosen.color = (.99, .83, .67, 1)
+                            self.chosen.on_size()
+                        if (i.position - self.chosen.position) in self.table_new:
+                            self.table_new.remove(i.position - self.chosen.position)
+                        else:
+                            self.table_new.remove(24 + i.position - self.chosen.position)
+                        self.counter -= 1
+                        if not self.counter:
+                            self.message_label.text = "Next player's turn"
+                            if self.player_turn == (.89, .93, .97, 1):
+                                self.player_turn = (.19, .16, .14, 1)
+                            else:
+                                self.player_turn = (.89, .93, .97, 1)
+                            self.turning_dices = False
 
-                    self.choosen = None
-                    print(self.choosen)
-                    break
+                        self.chosen = None
+                        break
+                if not self.turning_dices:
+                    self.message_label.text = "Next player should\n turn the dices!"
 
-    def __init__(self, first_label, second_label, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.first_label_dice = first_label
-        self.second_label_dice = second_label
+        self.turning_dices = False
+        self.player_turn = (.89, .93, .97, 1)
+        self.counter = 0
+        self.table_new = []
+        self.first_label_dice = None
+        self.second_label_dice = None
+        self.message_label = None
         self.rows = 2
         self.cols = 12
 
         self.place_on_game = []
-        self.choosen = None
+        self.chosen = None
 
         for i in range(12):
             self.place_on_game.append(GamePart(1, 11 - i, (.99, .83, .67, 1), 0))
