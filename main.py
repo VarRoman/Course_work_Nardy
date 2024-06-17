@@ -10,19 +10,21 @@ from kivy.config import Config
 from kivy.uix.gridlayout import GridLayout
 from random import randint
 from screeninfo import get_monitors
-from kivy.uix.button import Button
-import clock
 
 Builder.load_file('main.kv')
 
 Config.set('graphics', 'resizable', '0')
 
+total_score_white = 0
+total_score_black = 0
 
 class MyApp(App):
     def build(self):
         Window.fullscreen = 'auto'
 
-        self.layout = MainLayout()
+        print(total_score_black)
+
+        self.layout = MainLayout(total_score_white, total_score_black)
 
         return self.layout
 
@@ -41,14 +43,14 @@ class MainLayout(BoxLayout):
 
     def skip_the_turn(self, obj, value):  # Метод для пропуску ходу, коли немає можливості ходити
         if value != 'down':
-            if self.gm.player_turn == (.89, .93, .97, 1):
+            if self.gm.player_turn == (.89, .93, .96, 1):
                 self.gm.player_turn = (.19, .16, .14, 1)
             else:
-                self.gm.player_turn = (.89, .93, .97, 1)
+                self.gm.player_turn = (.89, .93, .96, 1)
             self.gm.table_new = []
             self.gm.turning_dices = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, total_white, total_black, **kwargs):
         super().__init__(**kwargs)
         # self.line_widget = Widget()
         self.orientation = 'vertical'
@@ -68,8 +70,17 @@ class MainLayout(BoxLayout):
         self.giving_up_the_turn_button = self.pl.children[0].children[0].children[0].children[1]
         self.giving_up_the_turn_button.fbind('state', self.skip_the_turn)
 
+        self.gm.white_player_final_label = self.pl.children[0].children[0].children[4].children[2]
+        self.gm.black_player_final_label = self.pl.children[0].children[0].children[4].children[0]
+
+        self.gm.white_player_final_record_label = self.pl.children[0].children[0].children[1].children[2]
+        self.gm.black_player_final_record_label = self.pl.children[0].children[0].children[1].children[0]
+
+        self.gm.total_value_white = total_score_white
+        self.gm.total_value_black = total_score_black
+
+
         self.add_widget(self.pl)
-        # self.add_widget(self.line_widget)
         self.add_widget(self.gm)
         self.rolling_button.state = 'normal'
 
@@ -78,7 +89,6 @@ class MainLayout(BoxLayout):
         for m in get_monitors():
             self.monitor.append(m.width)
             self.monitor.append(m.height)
-        print(self.monitor)
 
         with self.canvas:
             Color(.19, .16, .14, 1)  # Колір лінії (червоний)
@@ -96,6 +106,8 @@ class PlayerPlace(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.total_score_white = str(total_score_white)
+        self.total_score_black = str(total_score_black)
 
 
 class Checker(Widget):
@@ -124,7 +136,7 @@ class GamePart(AnchorLayout):  # Частини Gameplace, в яких буде 
     def on_size(self, *args):  # метод, який не дає трикутник розпадатися
         self.canvas.clear()
         with self.canvas:
-            Color(.99, .83, .67, 1)
+            Color(.99, .83, .66, 1)
             Rectangle(size=self.size, pos=self.pos)
             Color(49 / 255, 41 / 255, 36 / 255, 1)
 
@@ -163,52 +175,88 @@ class GamePart(AnchorLayout):  # Частини Gameplace, в яких буде 
 class GamePlace(GridLayout):  # Ігрове поле, на якому будуть відбуватися переміщення фішок
     def on_touch_down(self, touch):  # Один великий метод для налаштування механіки гри та її правил,
         # який спрацьовує під час натискання
+        if not sum([j.counter for j in self.place_on_game if j.color == self.player_turn]):
+            if self.player_turn == (.89, .93, .96, 1):
+                self.message_label.text = "White won!"
+                self.total_value_white += 1
+                self.white_player_final_record_label.text = f"{total_score_white}"
+
+            else:
+                self.message_label.text = "Black won!"
+                self.total_value_black += 1
+                self.black_player_final_record_label.text = f"{total_score_black}"
+
         if not self.chosen:
             for i in self.place_on_game:
-                if i.collide_point(*touch.pos) and i.counter != 0 and i.color == self.player_turn:
+                if i.collide_point(*touch.pos) and i.counter and i.color == self.player_turn:
                     self.chosen = i
                     break
 
         else:
             for i in self.place_on_game:
-                if i.collide_point(*touch.pos) and (i.color == self.chosen.color or
-                                                    i.color == (
-                                                            .99, .83, .67,
-                                                            1)) and i != self.chosen and self.turning_dices:
+                if (i.collide_point(*touch.pos) and (i.color == self.chosen.color
+                    or i.color == (.99, .83, .66, 1)) and i != self.chosen and self.turning_dices):
                     if not self.table_new:
                         self.message_label.text = ""
                         self.table_new.extend([int(self.first_label_dice.text), int(self.second_label_dice.text)])
                         if self.table_new[0] == self.table_new[1]:
                             self.table_new.extend([self.table_new[0], self.table_new[1]])
-                        self.counter = len(self.table_new)
+
                     if (i.position - self.chosen.position in self.table_new or
                             (i.position + 24) - self.chosen.position in self.table_new):
-                        i.counter = i.counter + 1
-                        i.ch.counter = i.counter
-                        i.ch.label.text = f'{i.counter}'
+                        if ((self.chosen.color == (.89, .93, .96, 1) and self.chosen.position in range(6, 12) and
+                            sum([j.counter for j in self.place_on_game[6:12]]) != self.counter_white) and
+                                i.position not in range(6, 12)):
+                            self.chosen = None
+                            break
+
+                        elif ((self.chosen.color == (.19, .16, .14, 1) and self.chosen.position in range(18, 24) and
+                            sum([j.counter for j in self.place_on_game[18:]]) != self.counter_black) and
+                                i.position not in range(18, 24)):
+                            self.chosen = None
+                            break
+
+                        elif ((self.chosen.color == (.19, .16, .14, 1) and self.chosen.position in range(18, 24) and
+                            sum([j.counter for j in self.place_on_game[18:]]) == self.counter_black) and
+                                i.position not in range(18, 24)):
+
+                            self.black_player_final_label.text = f"{int(self.black_player_final_label.text) + 1}"
+                            self.counter_black -= 1
+
+                        elif ((self.chosen.color == (.89, .93, .96, 1) and self.chosen.position in range(6, 12) and
+                               sum([j.counter for j in self.place_on_game[6:12]]) == self.counter_white) and
+                              i.position not in range(6, 12)):
+
+                            self.white_player_final_label.text = f"{int(self.white_player_final_label.text) + 1}"
+                            self.counter_white -= 1
+                            print(self.white_player_final_label.text)
+
+                        else:
+                            i.counter = i.counter + 1
+                            i.ch.counter = i.counter
+                            i.ch.label.text = f'{i.counter}'
+
+                            if i.color == (.99, .83, .66, 1) and i.counter > 0:
+                                i.color = self.chosen.color
+                                i.on_size()
 
                         self.chosen.counter = self.chosen.counter - 1
                         self.chosen.ch.counter = self.chosen.counter
                         self.chosen.ch.label.text = f'{self.chosen.counter}'
 
-                        if i.color == (.99, .83, .67, 1) and i.counter > 0:
-                            i.color = self.chosen.color
-                            i.on_size()
-
-                        if self.chosen.color != (.99, .83, .67, 1) and self.chosen.counter == 0:
-                            self.chosen.color = (.99, .83, .67, 1)
+                        if self.chosen.counter == 0:
+                            self.chosen.color = (.99, .83, .66, 1)
                             self.chosen.on_size()
                         if (i.position - self.chosen.position) in self.table_new:
                             self.table_new.remove(i.position - self.chosen.position)
                         else:
                             self.table_new.remove(24 + i.position - self.chosen.position)
-                        self.counter -= 1
-                        if not self.counter:
+                        if not self.table_new:
                             self.message_label.text = "Next player's turn"
-                            if self.player_turn == (.89, .93, .97, 1):
+                            if self.player_turn == (.89, .93, .96, 1):
                                 self.player_turn = (.19, .16, .14, 1)
                             else:
-                                self.player_turn = (.89, .93, .97, 1)
+                                self.player_turn = (.89, .93, .96, 1)
                             self.turning_dices = False
 
                         self.chosen = None
@@ -219,12 +267,24 @@ class GamePlace(GridLayout):  # Ігрове поле, на якому буду�
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.turning_dices = False
-        self.player_turn = (.89, .93, .97, 1)
-        self.counter = 0
+        self.player_turn = (.89, .93, .96, 1)
         self.table_new = []
+        self.counter_white = 15
+        self.counter_black = 15
+
         self.first_label_dice = None
         self.second_label_dice = None
         self.message_label = None
+
+        self.white_player_final_label = None
+        self.black_player_final_label = None
+
+        self.white_player_final_record_label = None
+        self.black_player_final_record_label = None
+
+        self.total_value_white = 0
+        self.total_value_black = 0
+
         self.rows = 2
         self.cols = 12
 
@@ -232,19 +292,20 @@ class GamePlace(GridLayout):  # Ігрове поле, на якому буду�
         self.chosen = None
 
         for i in range(12):
-            self.place_on_game.append(GamePart(1, 11 - i, (.99, .83, .67, 1), 0))
+            self.place_on_game.append(GamePart(1, 11 - i, (.99, .83, .66, 1), 0))
             self.add_widget(self.place_on_game[i])
 
         self.place_on_game.reverse()
 
         for i in range(12, 24):
-            self.place_on_game.append(GamePart(0, i, (.99, .83, .67, 1), 0))
+            self.place_on_game.append(GamePart(0, i, (.99, .83, .66, 1), 0))
             self.add_widget(self.place_on_game[i])
 
         self.place_on_game[0].counter = 15
         self.place_on_game[0].color = (.19, .16, .14, 1)
         self.place_on_game[12].counter = 15
-        self.place_on_game[12].color = (.89, .93, .97, 1)
+        self.place_on_game[12].color = (.89, .93, .96, 1)
+
 
 
 
