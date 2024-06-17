@@ -15,12 +15,12 @@ from kivy.properties import NumericProperty
 
 Config.set('graphics', 'resizable', '0')
 
+
 class MyApp(App):
     def build(self):
         Window.size = (1000, 700)
         Window.left = 250
         Window.resizable = False
-
 
         self.layout = BoxLayout(orientation='vertical')
         self.layout.size_hint = (1, 1)
@@ -83,6 +83,7 @@ class GamePlace(BoxLayout):
             bottom_down.add_widget(el)
 
         self.add_widget(bottom)
+
 
 if __name__ == '__main__':
     MyApp().run()

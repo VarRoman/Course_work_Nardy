@@ -1,5 +1,4 @@
 from kivy.app import App
-from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
@@ -8,10 +7,11 @@ from kivy.lang import Builder
 from kivy.graphics import Color, Rectangle, Ellipse, Line
 from kivy.core.window import Window
 from kivy.config import Config
-from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
-from kivy.properties import NumericProperty
 from random import randint
+from screeninfo import get_monitors
+from kivy.uix.button import Button
+import clock
 
 Builder.load_file('main.kv')
 
@@ -20,28 +20,26 @@ Config.set('graphics', 'resizable', '0')
 
 class MyApp(App):
     def build(self):
-        Window.size = (1000, 700)
-        Window.left = 250
-        Window.resizable = False
+        Window.fullscreen = 'auto'
 
         self.layout = MainLayout()
-        # self.layout.do_layout()
 
         return self.layout
 
+
 class MainLayout(BoxLayout):
-    def giving_the_dices(self, obj, value):
+    def giving_the_dices(self, obj, value):  # Для отримання випадкових чисел з кубиків
         if value != 'down':
             self.gm.message_label = self.pl.children[0].children[0].children[0].children[2]
             self.gm.first_label_dice = self.pl.children[0].children[0].children[0].children[3]
             self.gm.second_label_dice = self.pl.children[0].children[0].children[0].children[5]
             self.gm.turning_dices = True
 
-    def turning_down_the_checker(self, obj, value):
+    def turning_down_the_checker(self, obj, value):  # Метод щоб переобрати вже обрану фішку
         if value != 'down':
             self.gm.chosen = None
 
-    def skip_the_turn(self, obj, value):
+    def skip_the_turn(self, obj, value):  # Метод для пропуску ходу, коли немає можливості ходити
         if value != 'down':
             if self.gm.player_turn == (.89, .93, .97, 1):
                 self.gm.player_turn = (.19, .16, .14, 1)
@@ -52,6 +50,7 @@ class MainLayout(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # self.line_widget = Widget()
         self.orientation = 'vertical'
         self.size_hint = (1, 1)
         self.pl = PlayerPlace()
@@ -60,6 +59,9 @@ class MainLayout(BoxLayout):
         self.rolling_button = self.pl.children[0].children[0].children[3]
         self.rolling_button.fbind('state', self.giving_the_dices)
 
+        self.rolling_button.state = 'down'
+
+
         self.giving_up_the_checker_button = self.pl.children[0].children[0].children[0].children[0]
         self.giving_up_the_checker_button.fbind('state', self.turning_down_the_checker)
 
@@ -67,12 +69,28 @@ class MainLayout(BoxLayout):
         self.giving_up_the_turn_button.fbind('state', self.skip_the_turn)
 
         self.add_widget(self.pl)
+        # self.add_widget(self.line_widget)
         self.add_widget(self.gm)
+        self.rolling_button.state = 'normal'
 
+        self.monitor = []
 
+        for m in get_monitors():
+            self.monitor.append(m.width)
+            self.monitor.append(m.height)
+        print(self.monitor)
+
+        with self.canvas:
+            Color(.19, .16, .14, 1)  # Колір лінії (червоний)
+            Line(points=[self.monitor[0] / 2 - 2, 0, self.monitor[0] / 2 - 2, self.monitor[1] * .71], width=3)
 
 
 class PlayerPlace(BoxLayout):
+    def restart_the_game(self):  # метод для перезапуску гри
+        Window.clear()
+        App.get_running_app().stop()
+        MyApp().run()
+
     def get_random_points(self):
         return str(randint(1, 6))
 
@@ -102,10 +120,8 @@ class Checker(Widget):
             Ellipse(size=[100, 100], pos=(self.x - (self.height / 2), self.y))
 
 
-
-
-class GamePart(AnchorLayout):
-    def on_size(self, *args):
+class GamePart(AnchorLayout):  # Частини Gameplace, в яких буде розміщено Checkers, а також трикутники для візуалу
+    def on_size(self, *args):  # метод, який не дає трикутник розпадатися
         self.canvas.clear()
         with self.canvas:
             Color(.99, .83, .67, 1)
@@ -121,14 +137,15 @@ class GamePart(AnchorLayout):
                 Line(points=(
                     self.pos[0] + 5, self.pos[1] + 5, self.width + self.pos[0] - 10, self.pos[1] + 5, self.pos[0] +
                     (self.width / 2), self.height - 50), close=True, size=self.size)
+
         if self.place and self.place != -1:
             self.ch = Checker(self.color, self.position, self.counter,
-                         self.x + self.width / 2, self.height * 1.5 + 55)
+                              self.x + self.width / 2, self.height * 1.5 + 55)
             self.add_widget(self.ch.label)
             self.add_widget(self.ch)
         else:
             self.ch = Checker(self.color, self.position, self.counter,
-                                    self.x + self.width / 2, 14)
+                              self.x + self.width / 2, 14)
 
             self.add_widget(self.ch.label)
             self.add_widget(self.ch)
@@ -142,8 +159,10 @@ class GamePart(AnchorLayout):
         self.counter = counter  # кількість фішок на цьому полі
         # self.bind(on_touch_down=self.on_touch_down)
 
-class GamePlace(GridLayout):
-    def on_touch_down(self, touch):
+
+class GamePlace(GridLayout):  # Ігрове поле, на якому будуть відбуватися переміщення фішок
+    def on_touch_down(self, touch):  # Один великий метод для налаштування механіки гри та її правил,
+        # який спрацьовує під час натискання
         if not self.chosen:
             for i in self.place_on_game:
                 if i.collide_point(*touch.pos) and i.counter != 0 and i.color == self.player_turn:
@@ -153,7 +172,9 @@ class GamePlace(GridLayout):
         else:
             for i in self.place_on_game:
                 if i.collide_point(*touch.pos) and (i.color == self.chosen.color or
-                                        i.color == (.99, .83, .67, 1)) and i != self.chosen and self.turning_dices:
+                                                    i.color == (
+                                                            .99, .83, .67,
+                                                            1)) and i != self.chosen and self.turning_dices:
                     if not self.table_new:
                         self.message_label.text = ""
                         self.table_new.extend([int(self.first_label_dice.text), int(self.second_label_dice.text)])
