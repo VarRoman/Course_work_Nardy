@@ -11,7 +11,7 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import NumericProperty
 
-# Builder.load_file('main.kv')
+# Builder.load_file('nardy.kv')
 
 Config.set('graphics', 'resizable', '0')
 
